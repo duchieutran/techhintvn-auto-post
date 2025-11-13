@@ -3,6 +3,8 @@ import os
 import random
 import datetime
 import yaml
+import base64
+import requests
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -27,23 +29,32 @@ os.makedirs("posts", exist_ok=True)
 #  TẠO ẢNH THUMBNAIL
 # ===============================
 def generate_thumbnail(prompt_text):
-    import base64
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/image-001:generate?key={os.environ['GEMINI_API_KEY']}"
 
-    result = genai.generate_image(
-        model="models/image-001",
-        prompt=f"Poster tối giản màu xanh dương, chủ đề: {prompt_text}",
-        size="1024x1024"
-    )
+    payload = {
+        "prompt": {
+            "text": f"Poster tối giản màu xanh dương, chủ đề: {prompt_text}"
+        }
+    }
 
-    output_path = f"posts/thumb_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
 
-    # Lấy ảnh base64 từ output
-    image_bytes = base64.b64decode(result.generations[0].image.base64)
+    data = response.json()
 
-    with open(output_path, "wb") as f:
+    # Lấy base64 image
+    image_base64 = data["candidates"][0]["content"]["parts"][0]["inline_data"]["data"]
+    image_bytes = base64.b64decode(image_base64)
+
+    # Tạo file trong thư mục posts/
+    os.makedirs("posts", exist_ok=True)
+    file_path = f"posts/thumb_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+    with open(file_path, "wb") as f:
         f.write(image_bytes)
 
-    return output_path
+    print("Generated thumbnail:", file_path)
+    return file_path
 
 
 
