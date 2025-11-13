@@ -76,10 +76,25 @@ KHÔNG được dùng markdown.
 KHÔNG được tự ý thay đổi format YAML.
 """
 
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-    )
+    for attempt in range(5):   # thử tối đa 5 lần
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+            )
+            return response.text
+        except Exception as e:
+            print(f"AI ERROR (attempt {attempt+1}/5):", e)
+
+            if "overloaded" in str(e).lower() or "unavailable" in str(e).lower():
+                print("→ Model đang quá tải, chờ 5 giây rồi thử lại...")
+                import time
+                time.sleep(5)
+                continue
+            else:
+                raise e
+
+    raise Exception("❌ AI FAILED: Model overloaded quá nhiều lần!")
 
     return response.text
 
