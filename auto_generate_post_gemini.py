@@ -26,15 +26,25 @@ os.makedirs("posts", exist_ok=True)
 # ===============================
 #  TẠO ẢNH THUMBNAIL
 # ===============================
-def generate_thumbnail(t):
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    img = model.generate_image(prompt=f"Poster tối giản, màu xanh dương – chủ đề: {t}")
+def generate_thumbnail(prompt_text):
+    import base64
 
-    out = f"posts/thumb_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    with open(out, "wb") as f:
-        f.write(img.image)
+    result = genai.generate_image(
+        model="models/image-001",
+        prompt=f"Poster tối giản màu xanh dương, chủ đề: {prompt_text}",
+        size="1024x1024"
+    )
 
-    return out
+    output_path = f"posts/thumb_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+    # Lấy ảnh base64 từ output
+    image_bytes = base64.b64decode(result.generations[0].image.base64)
+
+    with open(output_path, "wb") as f:
+        f.write(image_bytes)
+
+    return output_path
+
 
 
 thumb_path = generate_thumbnail(topic)
