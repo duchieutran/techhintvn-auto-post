@@ -1,51 +1,44 @@
-import os
 import json
-import base64
-import yaml
+import os
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-BLOG_ID = os.getenv("BLOG_ID")
+BLOG_ID = os.environ["BLOG_ID"]
 
-def upload_post(filename, creds):
-    with open(filename, "r", encoding="utf-8") as f:
-        raw = f.read()
+creds = json.loads(os.environ["TOKEN_JSON"])
+credentials = Credentials(
+    creds["token"],
+    refresh_token=creds["refresh_token"],
+    token_uri=creds["token_uri"],
+    client_id=creds["client_id"],
+    client_secret=creds["client_secret"],
+    scopes=["https://www.googleapis.com/auth/blogger"]
+)
 
-    # Parse metadata (YAML)
-    front, body = raw.split("---", 2)[1:]
-    meta = yaml.safe_load(front)
+service = build("blogger", "v3", credentials=credentials)
 
-    title = meta.get("title", "No Title")
-    labels = meta.get("labels", [])
+# lấy bài mới nhất
+files = sorted(os.listdir("posts"), reverse=True)
+file_path = "posts/" + files[0]
 
-    service = build("blogger", "v3", credentials=creds)
+with open(file_path, "r", encoding="utf-8") as f:
+    data = f.read()
 
-    post = {
-        "kind": "blogger#post",
-        "title": title,
-        "content": body,
-        "labels": labels
-    }
+# tách YAML
+raw = data.split("---")
+yaml_raw = raw[1]
+html_body = "---".join(raw[2:])
 
-    service.posts().insert(blogId=BLOG_ID, body=post).execute()
-    print(f"Đã đăng: {title}")
+import yaml
+meta = yaml.safe_load(yaml_raw)
 
-def main():
-    creds = Credentials.from_authorized_user_info(json.loads(os.getenv("TOKEN_JSON")))
-    posts = sorted(os.listdir("posts"))
+post = {
+    "kind": "blogger#post",
+    "title": meta["title"],
+    "labels": meta["labels"],
+    "content": html_body
+}
 
-    if not posts:
-        print("Không có bài nào để đăng.")
-        return
+res = service.posts().insert(blogId=BLOG_ID, body=post, isDraft=False).execute()
 
-    first = posts[0]
-    filepath = os.path.join("posts", first)
-
-    upload_post(filepath, creds)
-
-    # Xóa bài đã đăng
-    os.remove(filepath)
-    print(f"Đã xóa file: {first}")
-
-if __name__ == "__main__":
-    main()
+print("POSTED:", res["url"])
