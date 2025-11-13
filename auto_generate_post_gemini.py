@@ -1,13 +1,13 @@
-import google.generativeai as genai
+from google import genai
 import os
 import random
 import datetime
 
-# cấu hình API
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# Tạo client với API key từ GitHub Secrets
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-# model dùng đúng chuẩn Python SDK
-MODEL = "models/gemini-1.5-pro-latest"
+# MODEL mới chuẩn AI Google 2025
+MODEL = "gemini-2.5-flash"
 
 TOPICS = [
     "AI Tools hữu ích cho sinh viên",
@@ -20,12 +20,12 @@ TOPICS = [
 
 topic = random.choice(TOPICS)
 
-# tạo folder
+# tạo folder posts/
 os.makedirs("posts", exist_ok=True)
 
 
 # ===============================
-#  TẠO LABEL
+#      TẠO LABEL TỰ ĐỘNG
 # ===============================
 def auto_label(t):
     t = t.lower()
@@ -42,7 +42,7 @@ label = auto_label(topic)
 
 
 # ===============================
-#  TẠO BÀI VIẾT 10K TỪ
+#     TẠO BÀI 10.000 TỪ
 # ===============================
 def generate_article_html():
     prompt = f"""
@@ -76,14 +76,20 @@ KHÔNG được dùng markdown.
 KHÔNG được tự ý thay đổi format YAML.
 """
 
-    model = genai.GenerativeModel(MODEL)
-    result = model.generate_content(prompt)
-    return result.text
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+    )
+
+    return response.text
 
 
+# tạo bài viết
 html = generate_article_html()
 
+# lưu file
 filename = f"posts/post_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+
 with open(filename, "w", encoding="utf-8") as f:
     f.write(html)
 
