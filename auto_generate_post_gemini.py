@@ -2,11 +2,12 @@ import google.generativeai as genai
 import os
 import random
 import datetime
-import yaml
 
+# cấu hình API
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-MODEL = "gemini-1.5-pro"
+# model dùng đúng chuẩn Python SDK
+MODEL = "models/gemini-1.5-pro-latest"
 
 TOPICS = [
     "AI Tools hữu ích cho sinh viên",
@@ -60,7 +61,8 @@ status: "publish"
 thumbnail: ""
 ---
 
-<h1>Tiêu đề bài viết</h1>
+<h1>Bài viết chủ đề: {topic}</h1>
+
 <p>Đoạn mở bài...</p>
 
 Sau đó viết thật dài theo cấu trúc:
@@ -81,9 +83,7 @@ KHÔNG được tự ý thay đổi format YAML.
 
 html = generate_article_html()
 
-# Lưu file
 filename = f"posts/post_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-
 with open(filename, "w", encoding="utf-8") as f:
     f.write(html)
 
