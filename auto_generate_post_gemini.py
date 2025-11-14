@@ -14,7 +14,7 @@ import time
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 MODEL = "gemini-2.5-flash"
 
-ACCESS_TOKEN = os.environ.get("BLOGGER_ACCESS_TOKEN")   # 🔥 DÙNG OAUTH TOKEN
+ACCESS_TOKEN = os.environ.get("BLOGGER_ACCESS_TOKEN")
 BLOG_ID = os.environ.get("BLOGGER_BLOG_ID")
 
 TOPICS = [
@@ -46,6 +46,85 @@ def auto_label(t):
 
 
 label = auto_label(topic)
+
+
+# ===============================
+#   CSS BEAUTIFY (TỰ CHÈN)
+# ===============================
+
+BEAUTIFY_CSS = """
+<style>
+  body, p {
+    font-size: 18px;
+    line-height: 1.75;
+    color: #333;
+    font-family: "Inter", "Roboto", sans-serif;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin: 20px 0;
+    font-weight: 700;
+    color: #111;
+  }
+
+  h2 {
+    font-size: 26px;
+    margin-top: 40px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  h3 {
+    font-size: 22px;
+    margin-top: 25px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #222;
+  }
+
+  ul {
+    margin: 10px 0 20px 20px;
+  }
+
+  ul li {
+    margin: 6px 0;
+    line-height: 1.7;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+  }
+
+  table th, table td {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+  }
+
+  table th {
+    background: #f5f5f5;
+    font-weight: 600;
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin: 14px 0;
+  }
+
+  blockquote {
+    border-left: 4px solid #2196F3;
+    padding-left: 12px;
+    margin: 20px 0;
+    font-style: italic;
+    color: #555;
+  }
+</style>
+"""
 
 
 # ===============================
@@ -86,6 +165,8 @@ thumbnail: ""
 version: "{version}"
 ---
 
+{BEAUTIFY_CSS}
+
 <h1>{{title_seo}}</h1>
 
 <p>Đoạn mở bài dài và hấp dẫn...</p>
@@ -114,7 +195,7 @@ def generate_html(prompt):
                 contents=prompt,
             )
 
-            return response.text or ""   # 🔥 chặn lỗi None
+            return response.text or ""
 
         except Exception as e:
             print(f"⚠️ AI ERROR (attempt {attempt+1}/5): {e}")
@@ -149,7 +230,7 @@ def publish_to_blogger(title, content_html):
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {ACCESS_TOKEN}",    # 🔥 DÙNG TOKEN
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
     }
 
     data = {
@@ -179,7 +260,6 @@ for v, html in versions:
         print(f"❌ Phiên bản {v} bị rỗng! Bỏ qua.")
         continue
 
-    # lưu file
     filename = f"posts/post_v{v}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -187,10 +267,8 @@ for v, html in versions:
 
     print("📁 Saved:", filename)
 
-    # Tự động đăng phiên bản 1
     if v == 1:
         try:
-            # lấy title từ YAML
             title = html.split("title:")[1].split("\n")[0].replace('"', "").strip()
             publish_to_blogger(title, html)
         except Exception as e:
