@@ -4,6 +4,8 @@ import random
 import datetime
 import requests
 import json
+import time
+
 
 # ============================
 #   CONFIG – API & MODEL
@@ -12,7 +14,7 @@ import json
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 MODEL = "gemini-2.5-flash"
 
-BLOGGER_API_KEY = os.environ.get("BLOGGER_API_KEY")
+ACCESS_TOKEN = os.environ.get("BLOGGER_ACCESS_TOKEN")   # 🔥 DÙNG OAUTH TOKEN
 BLOG_ID = os.environ.get("BLOGGER_BLOG_ID")
 
 TOPICS = [
@@ -55,28 +57,24 @@ Bạn là AI Writer chuyên viết blog SEO.
 
 ⚠️ TẠO 5 KEYWORD + PHÂN TÍCH
 - Hãy tạo danh sách 5 keyword SEO liên quan tới "{topic}".
-- Với mỗi keyword, tạo mô tả meta dài 150–200 ký tự.
-- Với mỗi keyword, đánh giá mức độ cạnh tranh: Low, Medium hoặc High.
-- Tạo biến {{seo_keywords}} = JSON gồm:
-  [
-    {{"keyword": "...", "meta": "...", "competition": "..."}},
-    ...
-  ]
+- Với mỗi keyword, tạo meta description dài 150–200 ký tự.
+- Với mỗi keyword, đánh giá cạnh tranh: Low, Medium hoặc High.
+- Tạo biến JSON {{seo_keywords}}.
 
 ⚠️ TIÊU ĐỀ CHUẨN SEO:
-- Không được lặp lại topic.
-- 55–70 ký tự.
+- KHÔNG được giống hệt topic.
+- Dài 55–70 ký tự.
 - Tăng CTR mạnh.
-- Tạo biến: {{title_seo}}
+- Tạo biến {{title_seo}}.
 
 ⚠️ VIẾT BÀI PHIÊN BẢN {version}/3:
-- Viết FULL HTML.
-- KHÔNG markdown – KHÔNG ``` – KHÔNG CSS/JS.
-- Độ dài mục tiêu: 7000–10000 từ.
-- Viết hoàn toàn khác các phiên bản khác (spin content).
-- Giữ format YAML.
+- FULL HTML.
+- KHÔNG markdown, KHÔNG ``` , KHÔNG CSS/JS.
+- Độ dài: 7000–10000 từ.
+- SPIN hoàn toàn so với các phiên bản khác.
+- Giữ đúng format YAML.
 
-⚠️ FORMAT XUẤT RA:
+📌 FORMAT XUẤT:
 
 ---
 title: "{{title_seo}}"
@@ -92,18 +90,18 @@ version: "{version}"
 
 <p>Đoạn mở bài dài và hấp dẫn...</p>
 
-Sau đó viết bài theo:
+⚠️ Sau đó viết bài theo:
 - 10–15 mục lớn (h2)
 - nhiều mục con (h3)
 - bảng <table>
 - bullet <ul><li>
 - ví dụ thực tế
 - FAQ
-- kết luận mạnh mẽ
+- kết luận mạnh
 
 KHÔNG dùng markdown.
 """
-    
+
 
 # ===============================
 #    GỌI GEMINI – TẠO 1 BÀI
@@ -115,13 +113,14 @@ def generate_html(prompt):
                 model=MODEL,
                 contents=prompt,
             )
-            return response.text
+
+            return response.text or ""   # 🔥 chặn lỗi None
 
         except Exception as e:
-            print(f"AI ERROR (attempt {attempt+1}/5): {e}")
-            if "overloaded" in str(e).lower():
-                print("→ Wait 5s...")
-                import time
+            print(f"⚠️ AI ERROR (attempt {attempt+1}/5): {e}")
+
+            if "overloaded" in str(e).lower() or "unavailable" in str(e).lower():
+                print("→ Model quá tải, chờ 5 giây...")
                 time.sleep(5)
             else:
                 raise e
@@ -135,7 +134,7 @@ def generate_html(prompt):
 def generate_all_versions():
     outputs = []
     for v in range(1, 4):
-        print(f"=== Tạo phiên bản {v}/3 ===")
+        print(f"\n=== Tạo phiên bản {v}/3 ===")
         prompt = build_prompt(v)
         html = generate_html(prompt)
         outputs.append((v, html))
@@ -143,10 +142,15 @@ def generate_all_versions():
 
 
 # ===============================
-#   ĐĂNG LÊN BLOGGER QUA API
+#   ĐĂNG LÊN BLOGGER (OAUTH)
 # ===============================
 def publish_to_blogger(title, content_html):
-    url = f"https://www.googleapis.com/blogger/v3/blogs/{BLOG_ID}/posts/?key={BLOGGER_API_KEY}"
+    url = f"https://www.googleapis.com/blogger/v3/blogs/{BLOG_ID}/posts/"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {ACCESS_TOKEN}",    # 🔥 DÙNG TOKEN
+    }
 
     data = {
         "kind": "blogger#post",
@@ -154,18 +158,13 @@ def publish_to_blogger(title, content_html):
         "content": content_html
     }
 
-    response = requests.post(
-        url,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json"}
-    )
+    response = requests.post(url, headers=headers, data=json.dumps(data))
 
     if response.status_code == 200:
-        print("🎉 Đăng Blogger thành công!")
+        print("\n🎉 Đăng Blogger thành công!")
         print("URL:", response.json().get("url"))
     else:
-        print("❌ Lỗi đăng Blogger:", response.text)
-
+        print("\n❌ Lỗi đăng Blogger:", response.text)
 
 
 # ===============================
@@ -175,14 +174,24 @@ def publish_to_blogger(title, content_html):
 versions = generate_all_versions()
 
 for v, html in versions:
+
+    if not html.strip():
+        print(f"❌ Phiên bản {v} bị rỗng! Bỏ qua.")
+        continue
+
+    # lưu file
     filename = f"posts/post_v{v}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print("Saved:", filename)
+    print("📁 Saved:", filename)
 
-    # Tự động đăng phiên bản 1 lên Blogger
+    # Tự động đăng phiên bản 1
     if v == 1:
-        # lấy title từ YAML dòng 2
-        title = html.split("title:")[1].split("\n")[0].replace('"', "").strip()
-        publish_to_blogger(title, html)
+        try:
+            # lấy title từ YAML
+            title = html.split("title:")[1].split("\n")[0].replace('"', "").strip()
+            publish_to_blogger(title, html)
+        except Exception as e:
+            print("❌ Lỗi lấy title:", e)
