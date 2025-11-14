@@ -108,24 +108,32 @@ KHÔNG ký tự code block.
 #   GỌI GEMINI – SINH NỘI DUNG
 # ==========================================
 def generate_html(prompt):
-    for attempt in range(5):
+    wait_times = [5, 10, 20, 40, 60, 80, 120, 150, 180, 200]  # retry 10 lần
+
+    for attempt in range(len(wait_times)):
         try:
             response = client.models.generate_content(
-                model=MODEL,
+                model="gemini-pro",   # model ổn định hơn flash
                 contents=prompt,
             )
+
             return clean_html_advanced(response.text or "")
 
         except Exception as e:
-            print(f"⚠️ AI ERROR (attempt {attempt + 1}/5): {e}")
+            print(f"⚠️ AI ERROR attempt {attempt+1}/{len(wait_times)} → {e}")
 
-            if "overloaded" in str(e).lower() or "unavailable" in str(e).lower():
-                print("→ Model quá tải, chờ 6 giây...")
-                time.sleep(6)
+            if ("overloaded" in str(e).lower()
+                or "unavailable" in str(e).lower()
+                or "503" in str(e)):
+                sleep_time = wait_times[attempt]
+                print(f"→ Model quá tải, chờ {sleep_time}s rồi thử lại...")
+                time.sleep(sleep_time)
+                continue
             else:
                 raise e
 
-    raise Exception("❌ Model quá tải quá nhiều lần!")
+    raise Exception("❌ Model quá tải quá nhiều lần (đã thử 10 lần)!")
+
 
 
 # ==========================================
