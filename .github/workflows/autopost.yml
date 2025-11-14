@@ -2,7 +2,7 @@ name: Auto Gemini Writer + Blogger
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # 5 phút đăng 1 bài
+    - cron: "*/30 * * * *" # 30 phút chạy 1 lần
   workflow_dispatch:
 
 jobs:
