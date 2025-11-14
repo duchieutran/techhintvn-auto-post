@@ -11,7 +11,7 @@ import time
 #   CONFIG – API & MODEL
 # ==========================================
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-2.5-pro"
 
 ACCESS_TOKEN = os.environ.get("BLOGGER_ACCESS_TOKEN")
 BLOG_ID = os.environ.get("BLOGGER_BLOG_ID")
