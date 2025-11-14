@@ -2,14 +2,19 @@ from google import genai
 import os
 import random
 import datetime
+import requests
+import json
 
-# Tạo client từ GitHub Secrets
+# ============================
+#   CONFIG – API & MODEL
+# ============================
+
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-
-# MODEL chuẩn AI Google 2025
 MODEL = "gemini-2.5-flash"
 
-# Chủ đề ngẫu nhiên
+BLOGGER_API_KEY = os.environ.get("BLOGGER_API_KEY")
+BLOG_ID = os.environ.get("BLOGGER_BLOG_ID")
+
 TOPICS = [
     "AI Tools hữu ích cho sinh viên",
     "Thủ thuật Android / iPhone 2025",
@@ -21,12 +26,11 @@ TOPICS = [
 
 topic = random.choice(TOPICS)
 
-# tạo folder posts/
 os.makedirs("posts", exist_ok=True)
 
 
 # ===============================
-#      TẠO LABEL TỰ ĐỘNG
+#   LABEL TỰ ĐỘNG
 # ===============================
 def auto_label(t):
     t = t.lower()
@@ -43,53 +47,68 @@ label = auto_label(topic)
 
 
 # ===============================
-#     TẠO BÀI 10.000 TỪ
+#    PROMPT CHÍNH TẠO 1 BÀI
 # ===============================
-def generate_article_html():
-    prompt = f"""
+def build_prompt(version):
+    return f"""
 Bạn là AI Writer chuyên viết blog SEO.
 
-⚠️ QUY ĐỊNH TIÊU ĐỀ:
-- KHÔNG được đặt tiêu đề giống topic: "{topic}".
-- Hãy tự tạo một tiêu đề SEO thật HẤP DẪN, dài 60–70 ký tự, tăng CTR.
-- Tiêu đề phải chứa từ khóa chính nhưng KHÔNG được trùng exact topic.
-- Tạo biến {{title_seo}} = tiêu đề SEO cuối cùng.
+⚠️ TẠO 5 KEYWORD + PHÂN TÍCH
+- Hãy tạo danh sách 5 keyword SEO liên quan tới "{topic}".
+- Với mỗi keyword, tạo mô tả meta dài 150–200 ký tự.
+- Với mỗi keyword, đánh giá mức độ cạnh tranh: Low, Medium hoặc High.
+- Tạo biến {{seo_keywords}} = JSON gồm:
+  [
+    {{"keyword": "...", "meta": "...", "competition": "..."}},
+    ...
+  ]
 
-⚠️ QUY ĐỊNH NỘI DUNG:
-- Viết bài cực dài ~10.000 từ.
-- Nội dung thuần HTML, KHÔNG markdown, KHÔNG ```.
-- KHÔNG được tự ý thay đổi format YAML.
-- KHÔNG được chèn CSS hoặc JavaScript.
+⚠️ TIÊU ĐỀ CHUẨN SEO:
+- Không được lặp lại topic.
+- 55–70 ký tự.
+- Tăng CTR mạnh.
+- Tạo biến: {{title_seo}}
 
-Xuất ra đúng format:
+⚠️ VIẾT BÀI PHIÊN BẢN {version}/3:
+- Viết FULL HTML.
+- KHÔNG markdown – KHÔNG ``` – KHÔNG CSS/JS.
+- Độ dài mục tiêu: 7000–10000 từ.
+- Viết hoàn toàn khác các phiên bản khác (spin content).
+- Giữ format YAML.
+
+⚠️ FORMAT XUẤT RA:
 
 ---
 title: "{{title_seo}}"
 labels: ["{label}"]
 description: "Mô tả chuẩn SEO cho chủ đề {topic}"
+keywords: "{{seo_keywords}}"
 status: "publish"
 thumbnail: ""
+version: "{version}"
 ---
 
 <h1>{{title_seo}}</h1>
 
 <p>Đoạn mở bài dài và hấp dẫn...</p>
 
-Sau đó viết thật dài theo cấu trúc:
-
+Sau đó viết bài theo:
 - 10–15 mục lớn (h2)
-- Nhiều mục con (h3)
-- Bullet points (<ul><li>)
-- Thêm bảng nếu phù hợp (<table>)
-- Nhiều ví dụ thực tế
-- FAQ dài
-- Kết luận mạnh mẽ
+- nhiều mục con (h3)
+- bảng <table>
+- bullet <ul><li>
+- ví dụ thực tế
+- FAQ
+- kết luận mạnh mẽ
 
 KHÔNG dùng markdown.
-KHÔNG lặp lại topic trong tiêu đề.
-KHÔNG được thay đổi YAML.
-    """
+"""
+    
 
+# ===============================
+#    GỌI GEMINI – TẠO 1 BÀI
+# ===============================
+def generate_html(prompt):
     for attempt in range(5):
         try:
             response = client.models.generate_content(
@@ -99,27 +118,71 @@ KHÔNG được thay đổi YAML.
             return response.text
 
         except Exception as e:
-            print(f"AI ERROR (attempt {attempt+1}/5):", e)
-
-            if any(x in str(e).lower() for x in ["overloaded", "unavailable", "rate limit"]):
-                print("→ Model quá tải, tạm chờ 5 giây...")
+            print(f"AI ERROR (attempt {attempt+1}/5): {e}")
+            if "overloaded" in str(e).lower():
+                print("→ Wait 5s...")
                 import time
                 time.sleep(5)
-                continue
             else:
                 raise e
 
-    raise Exception("❌ AI FAILED: Model overloaded quá nhiều lần!")
+    raise Exception("❌ Model overloaded quá nhiều lần!")
 
 
-# tạo bài viết
-html = generate_article_html()
+# ===============================
+#     TẠO 3 PHIÊN BẢN (SPIN)
+# ===============================
+def generate_all_versions():
+    outputs = []
+    for v in range(1, 4):
+        print(f"=== Tạo phiên bản {v}/3 ===")
+        prompt = build_prompt(v)
+        html = generate_html(prompt)
+        outputs.append((v, html))
+    return outputs
 
-# Tạo tên file
-filename = f"posts/post_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
 
-# lưu file
-with open(filename, "w", encoding="utf-8") as f:
-    f.write(html)
+# ===============================
+#   ĐĂNG LÊN BLOGGER QUA API
+# ===============================
+def publish_to_blogger(title, content_html):
+    url = f"https://www.googleapis.com/blogger/v3/blogs/{BLOG_ID}/posts/?key={BLOGGER_API_KEY}"
 
-print("Generated:", filename)
+    data = {
+        "kind": "blogger#post",
+        "title": title,
+        "content": content_html
+    }
+
+    response = requests.post(
+        url,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"}
+    )
+
+    if response.status_code == 200:
+        print("🎉 Đăng Blogger thành công!")
+        print("URL:", response.json().get("url"))
+    else:
+        print("❌ Lỗi đăng Blogger:", response.text)
+
+
+
+# ===============================
+#     CHẠY HỆ THỐNG
+# ===============================
+
+versions = generate_all_versions()
+
+for v, html in versions:
+    filename = f"posts/post_v{v}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print("Saved:", filename)
+
+    # Tự động đăng phiên bản 1 lên Blogger
+    if v == 1:
+        # lấy title từ YAML dòng 2
+        title = html.split("title:")[1].split("\n")[0].replace('"', "").strip()
+        publish_to_blogger(title, html)
