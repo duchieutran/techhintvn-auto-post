@@ -54,77 +54,211 @@ label = auto_label(topic)
 
 BEAUTIFY_CSS = """
 <style>
+
+  /* ==========================
+       FONT + BODY
+  ========================== */
   body, p {
     font-size: 18px;
-    line-height: 1.75;
-    color: #333;
-    font-family: "Inter", "Roboto", sans-serif;
+    line-height: 1.8;
+    color: #222;
+    font-family: "Inter", "Roboto", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ==========================
+       HEADING STYLE
+  ========================== */
+  h1, h2, h3 {
+    letter-spacing: 0.3px;
+    word-spacing: 2px;
+    line-height: 1.35;
   }
 
   h1 {
-    font-size: 32px;
-    margin: 20px 0;
-    font-weight: 700;
+    font-size: 34px;
+    margin: 25px 0 15px;
+    font-weight: 800;
     color: #111;
+    border-left: 6px solid #4A90E2;
+    padding-left: 12px;
+    animation: fadeIn 0.6s ease-in-out;
   }
 
   h2 {
-    font-size: 26px;
-    margin-top: 40px;
-    margin-bottom: 10px;
+    font-size: 28px;
     font-weight: 700;
-    color: #111;
+    margin-top: 45px;
+    margin-bottom: 15px;
+    color: #222;
+    position: relative;
+  }
+
+  h2:hover {
+    color: #0d6efd;
+    transition: 0.15s ease;
   }
 
   h3 {
-    font-size: 22px;
-    margin-top: 25px;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #222;
-  }
-
-  ul {
-    margin: 10px 0 20px 20px;
-  }
-
-  ul li {
-    margin: 6px 0;
-    line-height: 1.7;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 16px;
-  }
-
-  table th, table td {
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-  }
-
-  table th {
-    background: #f5f5f5;
+    font-size: 23px;
+    margin-top: 30px;
+    margin-bottom: 10px;
     font-weight: 600;
   }
 
-  img {
-    max-width: 100%;
-    border-radius: 6px;
+  /* ==========================
+       PARAGRAPH EFFECT
+  ========================== */
+  p {
     margin: 14px 0;
   }
 
-  blockquote {
-    border-left: 4px solid #2196F3;
-    padding-left: 12px;
-    margin: 20px 0;
-    font-style: italic;
-    color: #555;
+  p:hover {
+    background: #fafafa;
+    transition: 0.2s ease;
+    padding-left: 4px;
   }
+
+  /* ==========================
+       UL + LI BEAUTIFY
+  ========================== */
+  ul {
+    margin: 15px 0 20px 25px;
+    padding: 0;
+  }
+
+  ul li {
+    margin-bottom: 10px;
+    line-height: 1.7;
+    list-style: none;
+    position: relative;
+    padding-left: 24px;
+  }
+
+  ul li:before {
+    content: "✔";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    color: #4CAF50;
+    font-weight: bold;
+  }
+
+  /* ==========================
+       TABLE STYLE
+  ========================== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 16px;
+  }
+
+  table th {
+    background: #f0f4ff;
+    font-weight: 700;
+    border-bottom: 2px solid #d0d7ff;
+  }
+
+  table td, table th {
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+  }
+
+  table tr:hover {
+    background: #f5f8ff;
+    transition: 0.15s;
+  }
+
+  /* ==========================
+       BLOCKQUOTE
+  ========================== */
+  blockquote {
+    border-left: 4px solid #00a8ff;
+    padding-left: 15px;
+    margin: 20px 0;
+    background: #f8fbff;
+    color: #555;
+    font-style: italic;
+    animation: fadeIn 0.5s ease;
+  }
+
+  /* ==========================
+        IMAGE STYLE
+  ========================== */
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 18px 0;
+    transition: transform 0.25s ease;
+  }
+
+  img:hover {
+    transform: scale(1.02);
+  }
+
+  /* ==========================
+        LINK + HOVER
+  ========================== */
+  a {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  a:hover {
+    text-decoration: underline;
+    color: #004aad;
+  }
+
+  /* ==========================
+        HIGHLIGHT BOX
+  ========================== */
+  .note-box {
+    background: #e8f4ff;
+    border-left: 5px solid #2196F3;
+    padding: 15px;
+    margin: 18px 0;
+    border-radius: 4px;
+  }
+
+  .warning-box {
+    background: #fff5e6;
+    border-left: 5px solid #ff9800;
+    padding: 15px;
+    margin: 18px 0;
+    border-radius: 4px;
+  }
+
+  /* ==========================
+        CODE BLOCK BEAUTIFY
+  ========================== */
+  pre {
+    background: #1e1e1e;
+    padding: 14px;
+    border-radius: 6px;
+    color: #eee;
+    overflow-x: auto;
+    margin: 20px 0;
+  }
+
+  code {
+    color: #ffdd57;
+    font-size: 15px;
+  }
+
+  /* ==========================
+        SIMPLE FADE ANIMATION
+  ========================== */
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
 </style>
 """
+
 
 
 # ===============================
