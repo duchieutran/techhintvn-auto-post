@@ -2,7 +2,7 @@ name: Auto Gemini Writer + Blogger
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # 30 phút chạy 1 lần
+    - cron: "*/30 * * * *" # chạy mỗi 30 phút
   workflow_dispatch:
 
 jobs:
@@ -16,21 +16,26 @@ jobs:
         with:
           python-version: "3.10"
 
-      # Gỡ module google cũ để tránh lỗi import
+      # Xóa thư viện Google lỗi thời (tránh conflict)
       - name: Cleanup old google libs
         run: |
-          pip uninstall -y google googleapis-common-protos || true
+          pip uninstall -y google || true
+          pip uninstall -y googleapis-common-protos || true
 
+      # Cài toàn bộ thư viện cần thiết
       - name: Install libs
         run: |
           pip install google-genai
-          pip install google-auth google-auth-oauthlib google-api-python-client pyyaml Pillow
+          pip install google-auth google-auth-oauthlib google-api-python-client
+          pip install pyyaml Pillow beautifulsoup4 requests
 
+      # Tạo bài viết từ Gemini
       - name: Generate Article (Gemini)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python auto_generate_post_gemini.py
 
+      # Đăng lên Blogger
       - name: Post to Blogger
         env:
           BLOG_ID: ${{ secrets.BLOG_ID }}
