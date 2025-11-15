@@ -1,5 +1,6 @@
 from google import genai
 from clean_html_advanced import clean_html_advanced
+from auto_internal_linker import auto_add_internal_links
 import os
 import random
 import datetime
