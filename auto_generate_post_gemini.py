@@ -46,7 +46,192 @@ label = auto_label(topic)
 # ==========================================
 #   CSS CỦA BÀI VIẾT
 # ==========================================
-BEAUTIFY_CSS = """<style>body,p{font-size:18px;line-height:1.8;color:#222;font-family:Inter,Roboto,Arial,sans-serif}h1,h2,h3{line-height:1.35}h1{font-size:34px;margin:25px 0 15px;font-weight:800;color:#111;border-left:6px solid #4A90E2;padding-left:12px}h2{font-size:28px;font-weight:700;margin-top:45px;margin-bottom:15px}h3{font-size:23px;margin-top:30px;margin-bottom:10px;font-weight:600}p{margin:14px 0}ul{margin:15px 0 20px 25px;padding:0}ul li{margin-bottom:10px;line-height:1.7;list-style:none;position:relative;padding-left:24px}ul li:before{content:"✔";position:absolute;left:0;top:2px;color:#4CAF50;font-weight:bold}table{width:100%;border-collapse:collapse;margin:25px 0;font-size:16px}table th{background:#f0f4ff;font-weight:700;border-bottom:2px solid #d0d7ff}table td,table th{padding:12px 14px;border:1px solid #ddd}blockquote{border-left:4px solid #00a8ff;padding-left:15px;margin:20px 0;background:#f8fbff;color:#555;font-style:italic}img{max-width:100%;border-radius:8px;margin:18px 0}</style>"""
+BEAUTIFY_CSS = """
+<style>
+/* ===============================
+   GLOBAL
+================================ */
+body {
+  font-size: 18px;
+  line-height: 1.85;
+  color: #222;
+  font-family: Inter, Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===============================
+   HEADINGS
+================================ */
+h1, h2, h3 {
+  line-height: 1.35;
+  color: #111;
+}
+
+h1 {
+  font-size: 34px;
+  margin: 25px 0 18px;
+  font-weight: 800;
+  border-left: 6px solid #1A73E8;
+  padding-left: 15px;
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 48px;
+  margin-bottom: 18px;
+  position: relative;
+}
+
+h2:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 60px;
+  height: 3px;
+  background: #1A73E8;
+  border-radius: 2px;
+}
+
+h3 {
+  font-size: 23px;
+  font-weight: 600;
+  margin-top: 30px;
+  margin-bottom: 12px;
+}
+
+/* ===============================
+   PARAGRAPH & LIST
+================================ */
+p {
+  margin: 15px 0;
+}
+
+ul {
+  margin: 15px 0 22px 25px;
+  padding: 0;
+}
+
+ul li {
+  margin-bottom: 10px;
+  padding-left: 28px;
+  list-style: none;
+  position: relative;
+  line-height: 1.7;
+}
+
+ul li:before {
+  content: "🖥️";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-size: 17px;
+  color: #1A73E8;
+  transform: scale(1);
+  transition: 0.25s;
+}
+
+ul li:hover:before {
+  transform: scale(1.25) rotate(10deg);
+}
+
+/* ===============================
+   TABLE
+================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 28px 0;
+  font-size: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+table th {
+  background: #e8f0fe;
+  font-weight: 700;
+  padding: 14px;
+  border: 1px solid #d0d7ff;
+}
+
+table td {
+  padding: 14px;
+  border: 1px solid #e0e0e0;
+  transition: background 0.25s;
+}
+
+table tbody tr:hover td {
+  background: #f6f9ff;
+}
+
+/* ===============================
+   BLOCKQUOTE
+================================ */
+blockquote {
+  margin: 25px 0;
+  padding: 18px 22px;
+  background: #f7faff;
+  border-left: 5px solid #1A73E8;
+  border-radius: 4px;
+  color: #333;
+  font-style: italic;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ===============================
+   IMAGES
+================================ */
+img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 22px 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: 0.4s;
+}
+
+img:hover {
+  transform: scale(1.02);
+}
+
+/* ===============================
+   LINKS
+================================ */
+a {
+  color: #1A73E8;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.25s;
+}
+
+a:hover {
+  color: #0b57d0;
+  text-decoration: underline;
+}
+
+/* ===============================
+   ICON COMPUTER (if needed)
+================================ */
+
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+  body { font-size: 17px; }
+  h1 { font-size: 30px; }
+  h2 { font-size: 26px; }
+  h3 { font-size: 21px; }
+}
+</style>
+"""
 
 # ==========================================
 #   BUILD PROMPT TẠO 1 BÀI
