@@ -38,7 +38,7 @@ def auto_label(t):
     if "android" in t or "iphone" in t:
         return "tech-tips"
     if "kỹ năng" in t or "productivity" in t:
-        return "study-skill"
+        return "learning"
     return "fix-errors"
 
 label = auto_label(topic)
