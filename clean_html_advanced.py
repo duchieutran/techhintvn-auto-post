@@ -1,93 +1,56 @@
-# ===============================
-#   CLEAN HTML NÂNG CAO – FULL
-# ===============================
-
-import re
-import html
 from bs4 import BeautifulSoup
+from bs4.element import Comment
 
-def clean_html_advanced(raw_html):
-    # ===============================
-    # 1. Giải mã entity cơ bản
-    # ===============================
-    raw_html = html.unescape(raw_html)
+def clean_html_advanced(html: str) -> str:
+    """
+    Tối ưu HTML:
+    - Xóa comment HTML
+    - Xóa script, style
+    - Xóa thuộc tính rác
+    - Chuẩn hóa thẻ
+    - Loại bỏ div rác, span rác
+    """
 
-    # ===============================
-    # 2. XÓA KÝ TỰ ZERO-WIDTH
-    # ===============================
-    zero_width = r"[\u200B-\u200F\uFEFF]"
-    raw_html = re.sub(zero_width, "", raw_html)
+    if not html or not isinstance(html, str):
+        return ""
 
-    # ===============================
-    # 3. XÓA CÁC ENTITY SAI
-    # ===============================
-    raw_html = re.sub(r"&#x?[0-9A-Fa-f]{2,6};", "", raw_html)
-    raw_html = re.sub(r"&#\d{2,6};", "", raw_html)
+    soup = BeautifulSoup(html, "html.parser")
 
-    # ===============================
-    # 4. XÓA EMOJI – Unicode > U+FFFF
-    # ===============================
-    raw_html = re.sub(r"[\U00010000-\U0010FFFF]", "", raw_html)
-
-    # ===============================
-    # 5. XÓA KÝ TỰ CONTROL
-    # ===============================
-    raw_html = re.sub(r"[\x00-\x08\x0B-\x1F\x7F]", "", raw_html)
-
-    # ===============================
-    # 6. CHUẨN HÓA DẤU & và khoảng trắng
-    # ===============================
-    raw_html = raw_html.replace("&nbsp;", " ")
-    raw_html = raw_html.replace("&amp;", "&")
-    raw_html = re.sub(r"\s+", " ", raw_html)
-
-    # ===============================
-    # 7. BEAUTY HTML – LOẠI BỎ TAG RÁC
-    # ===============================
-    soup = BeautifulSoup(raw_html, "html.parser")
-
-    # Xoá span vô dụng
-    for span in soup.find_all("span"):
-        if not span.attrs:
-            span.unwrap()
-        else:
-            # Nếu span chỉ có style màu → bỏ màu
-            if "style" in span.attrs:
-                del span["style"]
-            # Nếu rỗng → xóa
-            if not span.text.strip():
-                span.decompose()
-
-    # Xoá div rác rỗng
-    for div in soup.find_all("div"):
-        if not div.text.strip() and not div.find("img"):
-            div.decompose()
-
-    # Xoá tag comment
-    for comment in soup(text=lambda text: isinstance(text, (BeautifulSoup.Comment))):
+    # ============================
+    # 1. XÓA COMMENT HTML
+    # ============================
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
         comment.extract()
 
-    # ===============================
-    # 8. Loại bỏ script/style (Blogger chặn)
-    # ===============================
+    # ============================
+    # 2. XÓA SCRIPT + STYLE
+    # ============================
     for tag in soup(["script", "style"]):
         tag.decompose()
 
-    # ===============================
-    # 9. Loại bỏ inline style nguy hiểm
-    # ===============================
+    # ============================
+    # 3. XÓA THUỘC TÍNH RÁC
+    # ============================
+    remove_attrs = [
+        "class", "style", "id", "onclick", "onload",
+        "data-*", "aria-*", "role"
+    ]
+
     for tag in soup.find_all(True):
-        if "style" in tag.attrs:
-            del tag["style"]
+        for attr in list(tag.attrs):
+            if attr in remove_attrs or attr.startswith("data") or attr.startswith("aria"):
+                del tag.attrs[attr]
 
-    # ===============================
-    # 10. Format lại HTML đẹp
-    # ===============================
-    cleaned_html = soup.prettify()
+    # ============================
+    # 4. XÓA TAG RÁC: <span>, <div> rỗng
+    # ============================
+    for tag in soup.find_all(["span", "div"]):
+        if not tag.text.strip():
+            tag.decompose()
 
-    # ===============================
-    # 11. Xoá khoảng trắng đầu/cuối
-    # ===============================
-    cleaned_html = cleaned_html.strip()
+    # ============================
+    # 5. LÀM ĐẸP LẠI HTML
+    # ============================
+    cleaned = soup.prettify()
 
-    return cleaned_html
+    return cleaned
