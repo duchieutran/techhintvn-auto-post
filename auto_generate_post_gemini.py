@@ -298,7 +298,7 @@ def generate_html(prompt):
     for attempt in range(len(wait_times)):
         try:
             response = client.models.generate_content(
-                model="gemini-pro",   # model ổn định hơn flash
+                model="gemini-2.5-flash",   # model ổn định hơn flash
                 contents=prompt,
             )
 
