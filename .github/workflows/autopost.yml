@@ -42,8 +42,3 @@ jobs:
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
         run: python post_to_blogger.py
 
-      - name: Fake Update Blogger
-        env:
-          BLOG_ID: ${{ secrets.BLOG_ID }}
-          BLOGGER_ACCESS_TOKEN: ${{ secrets.BLOGGER_ACCESS_TOKEN }}
-        run: python fake_update_blogger.py
